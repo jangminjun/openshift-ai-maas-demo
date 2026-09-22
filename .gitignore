@@ -1,0 +1,6 @@
+# Contains live credentials/connection info for the sandbox cluster — never commit.
+AGENT.md
+
+# Generated per-cluster state, incl. Keycloak client secret / user passwords
+# and self-service test user password (harness/harness.sh scenario17/20).
+harness/state/
