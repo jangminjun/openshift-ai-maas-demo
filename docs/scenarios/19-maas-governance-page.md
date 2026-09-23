@@ -6,6 +6,8 @@
 
 ## 목적
 
+![MaaS governance 페이지 — Subscriptions 탭](images/19-maas-governance.png)
+
 RHOAI 3.4까지는 MaaS 관련 설정(누가 어떤 모델을 구독할 수 있는지, 인가 정책)이 여러 화면/CR에 흩어져
 있었다. 3.5는 이걸 **Settings 안의 "MaaS Governance" 단일 탭**으로 통합해서, 관리자가 한 화면에서
 **Subscriptions**(그룹별 구독 모델·토큰 제한)와 **Authorization Policies**(인가 규칙)를 같이 보고
@@ -26,33 +28,19 @@ RHOAI 3.4까지는 MaaS 관련 설정(누가 어떤 모델을 구독할 수 있�
 
 ## 사전 조건 — 이 화면이 뜨려면 뭐가 설치/활성화돼 있어야 하나
 
-이건 화면에 나타나는 **결과**라서, 그 결과가 뜨려면 아래가 전부 맞아떨어져야 한다. 대부분
-이 저장소의 `harness/remote/maas-up.sh`가 이미 자동화해 둔 단계들이라, 그 스크립트의 각
-Step과 1:1로 대응시켜 놨다 — 페이지가 안 보이면 이 중 어느 단계가 빠졌는지부터 의심할 것.
+아래가 전부 맞아야 페이지가 뜬다. 전부 이 저장소의 `harness.sh`(base cluster는
+`openshift-aws-harness/harness.sh rhoai`)가 자동화한다 — 안 보이면 이 중 빠진 게 없는지
+확인.
 
-1. **RHOAI 3.5 오퍼레이터 + `DataScienceCluster` Ready** — `openshift-aws-harness/harness/harness.sh rhoai`
-   (`channel: stable-3.5`로 이미 맞춰둠). 대시보드 자체(`rhods-dashboard`)가 이걸로 뜸.
-2. **RHCL(Kuadrant: Authorino + Limitador) 오퍼레이터** — `maas-up.sh` Step 1. Governance 페이지가
-   보여주고 고치는 `AuthPolicy`/`RateLimitPolicy` CR들의 컨트롤러가 이 오퍼레이터에서 나온다 — 이게
-   없으면 페이지가 뜨더라도 "관리할 대상"(백엔드 CR) 자체가 없다.
-3. **`DataScienceCluster`의 `spec.components.aigateway.modelsAsAService.managementState: Managed`** —
-   `maas-up.sh` Step 3 (RHOAI 3.4까지는 `kserve.modelsAsService`였음, 3.5에서 개명 —
-   `lessonlearn.md` 참고). MaaS 기능 자체의 온/오프 스위치.
-4. **`odhdashboardconfig`의 대시보드 기능 플래그** — `maas-up.sh` Step 7,
-   `redhat-ods-applications` 네임스페이스의 `odh-dashboard-config`:
-   `genAiStudio: true`, `modelAsService: true` (+ `disableModelRegistry: false`,
-   `disableModelCatalog: false`, `disableKServeMetrics: false`, `disableLMEval: false`).
-   **이게 핵심 스위치다 — 이 두 플래그가 꺼져 있으면 오퍼레이터/CR이 다 정상이어도 Settings 메뉴에
-   "MaaS Governance" 항목 자체가 안 보일 가능성이 높다.** 확인: `oc get odhdashboardconfig
-   odh-dashboard-config -n redhat-ods-applications -o jsonpath='{.spec.dashboardConfig}'`
-5. **대시보드/모델 컨트롤러 재기동** — `maas-up.sh` Step 8 (`odh-model-controller`,
-   `kserve-controller-manager` pod 재시작). 위 설정 변경을 컨트롤러가 즉시 못 읽는 경우가 있어 필요.
-6. **`system:admin`(cluster-admin) 계정으로 로그인** — Settings 메뉴 자체가 관리자 전용일 가능성이 높음
-   (일반 사용자로 접근 시 막히는지는 "리스크" 항목 참고).
-7. **(내용이 있으려면) 구독 대상이 될 모델/네임스페이스가 최소 1개 이상 배포되어 있을 것** — 예:
-   `./harness.sh scenario18-deploy-model`로 배포한 모델, 또는 시나리오 17에서 만든 그룹
-   (`maas-basic`/`maas-premium`)에 매핑될 모델. 없으면 페이지는 뜨지만 Subscriptions 탭이 빈 화면일
-   수 있다.
+| 구성 요소 | 필요한 상태 | 확인 명령 |
+|---|---|---|
+| `DataScienceCluster` (RHOAI 오퍼레이터) | `default-dsc`가 Ready | `oc get datasciencecluster default-dsc` |
+| RHCL 오퍼레이터의 `Kuadrant` CR (Authorino + Limitador) | Ready — Governance 페이지가 다루는 `AuthPolicy`/`RateLimitPolicy`의 컨트롤러 원천 | `oc get kuadrant -A` |
+| `DataScienceCluster`의 `aigateway` 컴포넌트 | `spec.components.aigateway.modelsAsAService.managementState: Managed` (3.4까지는 `kserve.modelsAsService`, 3.5에서 개명) | `oc get datasciencecluster default-dsc -o jsonpath='{.spec.components.aigateway.modelsAsAService.managementState}'` |
+| `OdhDashboardConfig` CR | `spec.dashboardConfig.genAiStudio`/`modelAsService`가 `true` — **핵심 스위치**, 꺼져 있으면 Settings에 메뉴 자체가 안 뜸 | `oc get odhdashboardconfig odh-dashboard-config -n redhat-ods-applications -o jsonpath='{.spec.dashboardConfig}'` |
+| `odh-model-controller` / `kserve-controller-manager` Deployment | 설정 변경 반영을 위해 재기동되어 Running | `oc get pods -n redhat-ods-applications -l app=odh-model-controller` |
+| 로그인 계정 | `system:admin`(cluster-admin) 권한 — 일반 사용자 접근은 "리스크" 항목 참고 | - |
+| `LLMInferenceService` / `MaaSSubscription` | 구독 대상 모델 최소 1개 배포 — 없으면 페이지는 뜨지만 Subscriptions 탭이 빔 | `oc get llminferenceservice -A` |
 
 전부 완료됐는지 한 번에 확인: `cd openshift-ai-maas-demo/harness && ./harness.sh scenario19-governance-snapshot`
 결과에서 `modelsAsService`가 `Managed`인지, `odhdashboardconfig`에 위 플래그들이 켜져 있는지, AuthPolicy/

@@ -42,10 +42,11 @@ sequenceDiagram
 
 ## 사전 조건
 
-- 베이스 클러스터 + RHOAI 3.5 (`openshift-aws-harness` → `harness.sh rhoai`) + MaaS 게이트웨이
-  (`openshift-ai-maas-demo/harness` → `./harness.sh maas-up`, 이 저장소 자체 스크립트)
-- 외부 IDP: **Red Hat build of Keycloak(RHBK) 오퍼레이터**로 클러스터 안에 직접 구축 (Bitnami나
-  별도 VM이 아니라 OperatorHub 인증 오퍼레이터로 결정)
+| 구성 요소 | 필요한 상태 |
+|---|---|
+| `DataScienceCluster` (RHOAI 3.5) | Ready — `openshift-aws-harness/harness.sh rhoai` |
+| MaaS Gateway (RHCL/Kuadrant + `aigateway` 컴포넌트) | Ready — `openshift-ai-maas-demo/harness.sh maas-up` |
+| 외부 IDP | **Red Hat build of Keycloak(RHBK)** Operator로 클러스터 내부에 직접 구축 (Bitnami/별도 VM 아님) |
 
 ## 절차
 
@@ -68,17 +69,14 @@ bash ./local/scenario17-manual-test.sh       # 검증 (노트북에서 SSH 없�
 
 ## 실측 결과 (2026-09-23)
 
-**`GET /v1/models`, 실제 채팅 완성 호출 모두 성공.** OpenShift 계정 없는 Keycloak 사용자가 인증
-통과, 모델 카탈로그+구독 정보 응답(HTTP 200, 토큰 없으면 401), `POST .../v1/chat/completions`도
-HTTP 200으로 실제 vLLM 응답을 받는다. `local/scenario17-manual-test.sh`로 재현 가능.
+`GET /v1/models`와 `POST .../v1/chat/completions` 모두 HTTP 200 (토큰 없으면 401) — Keycloak
+사용자가 OpenShift 계정 없이 인증부터 실제 vLLM 추론까지 성공. `local/scenario17-manual-test.sh`로
+재현 가능.
 
-Authorino→`maas-api` mTLS 403 문제(아래 lessonlearn.md 참고)는 `./harness.sh
-scenario17-authorino-trust-ca`로 해결/자동화됨.
-
-과정에서 RHOAI 3.5 기본 설치 자체의 버그 4개를 찾았고 모두 harness 스크립트에 반영해서 다음
-설치부터는 자동으로 해결된다(API 필드 개명, Gateway TLS 설정 누락, 두 컨트롤러의 AuthPolicy
-소유권 충돌, Authorino→maas-api mTLS). 각 버그의 원인 분석·재현 로그·해결 과정 전체는
-`lessonlearn.md` 참고(민감정보 없는 git 추적 파일이라 여기 반복 안 함).
+RHOAI 3.5 기본 설치에서 버그 4개 발견, 전부 `harness/remote/maas-up.sh` /
+`scenario17-authorino-trust-ca.sh`에 자동화됨 — `DataScienceCluster` API 필드 개명, `Gateway`
+TLS 설정 누락, `odh-model-controller`와의 `AuthPolicy` 소유권 충돌, Authorino→`maas-api` mTLS
+인증서 미신뢰. 원인 분석·재현 로그는 `lessonlearn.md` 참고.
 
 ## 남은 작업
 

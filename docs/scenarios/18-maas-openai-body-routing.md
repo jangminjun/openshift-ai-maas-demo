@@ -166,17 +166,17 @@ flowchart TD
 {"model": "publishers/maas-demo/models/Qwen2.5-1.5B-Instruct", "messages": [...]}
 ```
 
-**실제 서로 다른 두 모델로 라우팅 확인 완료**: GPU 노드를 하나 더 추가해(quota 재확인 후
-`myocp-z8mpx-gpu-g4dn-xlarge-us-east-1a` replicas=2) Qwen2.5-1.5B-Instruct와
-DeepSeek-R1-Distill-Qwen-1.5B를 각자의 GPU에 띄우고, **완전히 같은 URL**에 `model` 필드만
-바꿔서 호출 — 둘 다 HTTP 200, 응답 JSON의 `model` 필드도 요청한 모델과 정확히 일치. 경로
-기반(시나리오 17) 엔드포인트도 여전히 동작하므로 둘은 동시 지원됨. `local/scenario18-manual-test.py`
-/ `.java`가 이 두 모델로 검증하고 "요청한 model" vs "실제 응답한 모델"을 비교 출력한다.
+**서로 다른 두 `LLMInferenceService`로 라우팅 확인 완료**: GPU `MachineSet`을 replicas=2로
+스케일해 Qwen2.5-1.5B-Instruct와 DeepSeek-R1-Distill-Qwen-1.5B를 각자의 GPU 노드에 배포,
+**완전히 같은 URL**에 `model` 필드만 바꿔서 호출 — 둘 다 HTTP 200, 응답 JSON의 `model` 필드도
+요청과 정확히 일치. 경로 기반(시나리오 17) 엔드포인트도 동시에 계속 동작함.
+`local/scenario18-manual-test.py` / `.java`가 이 두 모델로 검증하고 "요청한 model" vs "실제
+응답한 모델"을 비교 출력한다.
 
-CPU에서 두 번째 모델을 띄우려던 시도(공식 vLLM 커뮤니티 CPU 이미지, 실제 요청에서 무한
-루프)는 포기하고 GPU로 전환 — 상세 재현 과정은 `lessonlearn.md` 참고.
+CPU 워커에서 두 번째 모델을 띄우려던 시도(공식 vLLM 커뮤니티 CPU 이미지)는 실제 추론 요청에서
+무한 루프를 발견해 포기 — 상세 재현 과정은 `lessonlearn.md` 참고.
 
-**두 번째 모델 재현용 harness 명령** (GPU 하나 더 필요, 먼저 quota 확인):
+재현 명령 (GPU 여유 필요, 먼저 quota 확인):
 ```sh
 GPU_REPLICAS=2 ./harness.sh scenario17-scale-gpu
 MODEL_NAMESPACE=maas-demo MODEL_NAME=maas-demo-model-deepseek \
