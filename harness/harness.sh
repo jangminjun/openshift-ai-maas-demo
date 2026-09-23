@@ -18,7 +18,7 @@
 #   scenario18-deploy-model           deploy a GPU-backed LLMInferenceService (any model/namespace) + register it with MaaS in one step
 #   scenario18-openai-routing-test    fixed-endpoint /v1/chat/completions, model switched via body only
 #   scenario19-governance-snapshot    dump Authorino/Kuadrant/DSC CRs relevant to the Governance page, for before/after diffing
-#   scenario20-selfservice-user       add a non-admin htpasswd user for testing the self-service Subscriptions tab
+#   scenario20-selfservice-user       add a non-admin htpasswd user in an OpenShift Group (SELF_SERVICE_GROUP, default maas-basic) for testing the self-service Subscriptions tab -- see local/scenario20-manual-test.sh to verify via API
 #
 # Config: harness/config.env (bastion IP, SSH key, cluster name). Cluster
 # access details also documented in ../AGENT.md.
@@ -112,7 +112,7 @@ cmd_scenario20_selfservice_user() {
     save_state selfservice-user.env SELF_SERVICE_PASSWORD "$SELF_SERVICE_PASSWORD"; \
     log "Generated password, saved to state/selfservice-user.env (gitignored)."; }
   ssh_bastion "SELF_SERVICE_USERNAME='${SELF_SERVICE_USERNAME}' SELF_SERVICE_PASSWORD='${SELF_SERVICE_PASSWORD}' \
-    bash -s" < ./remote/scenario20-selfservice-user.sh
+    SELF_SERVICE_GROUP='${SELF_SERVICE_GROUP:-maas-basic}' bash -s" < ./remote/scenario20-selfservice-user.sh
 }
 
 case "$cmd" in

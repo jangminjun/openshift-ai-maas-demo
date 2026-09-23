@@ -4,6 +4,19 @@
 비밀정보는 없음 — 이 파일은 git으로 추적됨. 실시간 접속 정보와 현재 상태는 `AGENT.md`
 (gitignored)에 있음.
 
+## 2026-09-23 — MaaS 그룹 기반 구독 매칭은 Keycloak `groups` 클레임과 OpenShift `Group` 멤버십, 서로 다른 두 경로로 각각 동작함
+
+시나리오 17(Keycloak)은 JWT의 `groups` 클레임으로 매칭되지만, OpenShift OAuth(htpasswd) 로그인은
+`AuthPolicy`의 `openshift-identities`(`kubernetesTokenReview`) 경로를 타고, 여기서의
+`groups`는 `TokenReview` 응답의 `user.groups` — 즉 실제 OpenShift `Group` CR 멤버십에서
+나온다. htpasswd 사용자를 아무리 만들어도 `Group`에 안 넣으면 `/v1/subscriptions`가 항상 빈
+배열. `scenario20-selfservice-user.sh`가 사용자 생성 + `oc adm groups add-users`까지 함께
+처리하도록 수정.
+
+부가로: `htpasswd` CLI(httpd-tools)가 없는 머신에서도 `openssl passwd -apr1`로 호환 해시를
+만들어 `htpass-secret`을 직접 `oc patch`할 수 있음(bastion의 로컬 `users.htpasswd` 파일 불필요)
+— htpasswd 파일은 한 줄에 bcrypt/apr1 등 여러 해시 방식이 섞여 있어도 됨.
+
 ## 2026-09-23 — G/VT vCPU 쿼터, 예전 기록(4)과 다름 (실측 16)
 
 이전 기록엔 "쿼터=4, g4dn.xlarge 1대가 한계"라고 돼 있었지만, `aws service-quotas

@@ -28,9 +28,11 @@ Gen AI Studio의 API Keys 페이지에 새로 생긴 **Subscriptions 탭**에서
 ## 절차
 
 ```
-0) (사전 준비) 일반 사용자 계정이 없으면 먼저 생성:
+0) (사전 준비) 일반 사용자 계정이 없으면 먼저 생성 (htpasswd IDP에 추가 + OpenShift Group
+   `maas-basic`/`maas-premium`에 가입까지 한 번에):
    cd openshift-ai-maas-demo/harness && ./harness.sh scenario20-selfservice-user
    (비밀번호는 harness/state/selfservice-user.env에 저장됨, gitignored)
+   API로 바로 검증하려면 (브라우저 없이): bash ./local/scenario20-manual-test.sh
 1) https://data-science-gateway.apps.myocp.sandbox1314.opentlc.com 접속
    (일반 사용자 계정 — 관리자 아님, 위에서 만든 계정 또는 시나리오 17의 테스트 계정 재사용 가능)
 2) Gen AI Studio → API Keys 페이지 진입
@@ -51,13 +53,21 @@ Gen AI Studio의 API Keys 페이지에 새로 생긴 **Subscriptions 탭**에서
 
 ## 리스크 / 확인 필요
 
-- 일반 사용자 계정으로 대시보드에 로그인하는 절차 자체(OpenShift OAuth 기반이라 htpasswd 사용자 추가가
-  필요할 수 있음 — `create-admin-user`는 관리자 1명만 만들므로, 테스트용 일반 사용자 계정을 별도로 몇 개
-  추가해야 이 시나리오를 제대로 검증 가능).
 - 19/20이 같은 백엔드 데이터를 읽는지, 아니면 20이 캐시된/지연된 값을 보여줄 수 있는지 — 위 절차 5번의
   반영 지연 여부가 핵심 실측 포인트.
 
-## 실측 결과
+## 실측 결과 (2026-09-23)
 
-_(미착수 — `myocp` 클러스터 설치 및 RHOAI 3.5/MaaS 배포 완료 후 진행 예정. 테스트용 일반 사용자 계정
-준비가 선행 조건.)_
+`GET /v1/subscriptions`가 Subscriptions 탭이 읽는 것과 정확히 같은 데이터를 반환하는 것을
+확인 — 일반 htpasswd 사용자를 OpenShift `Group`(`maas-basic`)에 넣고 그 사용자로 로그인해서
+호출하면 관리자가 시나리오 17/19에서 설정한 구독/쿼터가 그대로 보임(HTTP 200). 즉 이 API
+호출만으로 브라우저 없이 "관리자 설정 → 사용자 화면 반영"을 검증할 수 있다 —
+`local/scenario20-manual-test.sh`가 이걸 자동화한다 (격리된 kubeconfig로 로그인해서 현재 `oc`
+세션은 안 건드림).
+
+중요한 발견: 시나리오 17의 Keycloak 그룹(`groups` JWT 클레임)과 이 시나리오의 OpenShift OAuth
+그룹은 **서로 다른 메커니즘**이다. `AuthPolicy`의 `openshift-identities` 인증 경로는
+`kubernetesTokenReview`가 반환하는 `user.groups`를 쓰는데, 이건 실제 OpenShift `Group` CR
+멤버십에서 나온다 — htpasswd 사용자를 아무리 만들어도 `Group`에 넣지 않으면 `/v1/subscriptions`가
+빈 배열을 반환한다. `scenario20-selfservice-user.sh`가 사용자 생성과 `Group` 가입을 함께
+처리하도록 반영함.
