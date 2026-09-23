@@ -55,32 +55,30 @@ cd openshift-ai-maas-demo/harness
 ./harness.sh scenario17-keycloak-realm       # realm + 그룹 2개 + 유저 2명 + OIDC 클라이언트
 ./harness.sh scenario17-keycloak-token-test  # Keycloak 단독 검증 (토큰에 groups 클레임 확인)
 ./harness.sh scenario17-wire-authpolicy      # Authorino가 Keycloak을 신뢰하도록 연결
+./harness.sh scenario17-authorino-trust-ca   # Authorino가 라우터 CA(Keycloak)+service-ca(maas-api mTLS) 신뢰하도록
 
 # 모델 배포는 monitoring-llmd-rhoai에서 (예: LLMD_NAMESPACE=maas-demo LLMD_GATEWAY_NAME=maas-default-gateway)
 MODEL_NAMESPACE=maas-demo MODEL_NAME=maas-demo-model \
-  MODEL_GROUP_LIMITS="maas-basic:100,maas-premium:100000" \
+  MODEL_GROUP_LIMITS="maas-basic:500,maas-premium:100000" \
   ./harness.sh scenario17-register-model     # MaaSSubscription + MaaSAuthPolicy 그룹별 등록
 
 bash ./local/scenario17-manual-test.sh       # 검증 (노트북에서 SSH 없이 바로 실행)
 ```
 
-## 실측 결과 (2026-09-22)
+## 실측 결과 (2026-09-23)
 
-**`GET /v1/models`는 완전히 성공** — OpenShift 계정 없는 Keycloak 사용자가 실제 인증 통과, 모델
-카탈로그+구독 정보까지 정상 응답 (HTTP 200, 토큰 없으면 401). `local/scenario17-manual-test.sh`로
-직접 재현 가능.
+**`GET /v1/models`, 실제 채팅 완성 호출 모두 성공.** OpenShift 계정 없는 Keycloak 사용자가 인증
+통과, 모델 카탈로그+구독 정보 응답(HTTP 200, 토큰 없으면 401), `POST .../v1/chat/completions`도
+HTTP 200으로 실제 vLLM 응답을 받는다. `local/scenario17-manual-test.sh`로 재현 가능.
 
-**실제 채팅 완성 호출은 아직 403** — Authorino가 인가 과정에서 `maas-api`에 거는 mTLS 호출이
-`maas-api`한테 거부당한다("bad certificate"). 그룹 매칭 자체는 통과하는 걸 확인했고(rego의
-`model_access`에 정상 반영됨), 이 mTLS 단계 하나가 막혀서 최종 인가까지 못 감. **미해결.**
+Authorino→`maas-api` mTLS 403 문제(아래 lessonlearn.md 참고)는 `./harness.sh
+scenario17-authorino-trust-ca`로 해결/자동화됨.
 
-과정에서 RHOAI 3.5 기본 설치 자체의 버그 4개를 찾았고(API 필드 개명, Gateway TLS 설정 누락, 두
-컨트롤러의 AuthPolicy 소유권 충돌, 위의 mTLS 문제), 3개는 이미 harness 스크립트에 반영해서 다음
-설치부터는 자동으로 해결된다. 각 버그의 원인 분석·재현 로그·해결 과정 전체는 `lessonlearn.md` 참고
-(민감정보 없는 git 추적 파일이라 여기 반복 안 함).
+과정에서 RHOAI 3.5 기본 설치 자체의 버그 4개를 찾았고 모두 harness 스크립트에 반영해서 다음
+설치부터는 자동으로 해결된다(API 필드 개명, Gateway TLS 설정 누락, 두 컨트롤러의 AuthPolicy
+소유권 충돌, Authorino→maas-api mTLS). 각 버그의 원인 분석·재현 로그·해결 과정 전체는
+`lessonlearn.md` 참고(민감정보 없는 git 추적 파일이라 여기 반복 안 함).
 
 ## 남은 작업
 
-- Authorino → `maas-api` mTLS 문제 해결 (유일한 미해결 항목)
-- 위가 풀리면: Group Mapping → 실제 쿼터 차등 적용(`maas-basic` 100 vs `maas-premium` 100000
-  토큰/시간) 검증
+- Group Mapping → 실제 쿼터 차등 적용(`maas-basic` 100 vs `maas-premium` 100000 토큰/시간) 검증

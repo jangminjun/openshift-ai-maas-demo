@@ -11,6 +11,7 @@
 #   scenario17-keycloak-realm         realm + basic/premium groups + 2 users + OIDC client (pulls secrets to state/keycloak-users.env)
 #   scenario17-keycloak-token-test    standalone Keycloak check: both users get a token with a "groups" claim
 #   scenario17-wire-authpolicy        add Keycloak as a JWT identity source on the MaaS AuthPolicy (idempotent, re-run if it disappears)
+#   scenario17-authorino-trust-ca     make Authorino trust the router CA (Keycloak) + service-serving-signer CA (maas-api mTLS) -- idempotent, re-run after any cluster rebuild
 #   scenario17-register-model         MaaSModelRef + per-group MaaSSubscription + MaaSAuthPolicy for a deployed model
 #   scenario18-openai-routing-test    fixed-endpoint /v1/chat/completions, model switched via body only
 #   scenario19-governance-snapshot    dump Authorino/Kuadrant/DSC CRs relevant to the Governance page, for before/after diffing
@@ -57,6 +58,10 @@ cmd_scenario17_wire_authpolicy() {
     bash -s" < ./remote/scenario17-wire-authpolicy.sh
 }
 
+cmd_scenario17_authorino_trust_ca() {
+  ssh_bastion "bash -s" < ./remote/scenario17-authorino-trust-ca.sh
+}
+
 cmd_scenario17_register_model() {
   ssh_bastion "MODEL_NAMESPACE='${MODEL_NAMESPACE:?set MODEL_NAMESPACE}' MODEL_NAME='${MODEL_NAME:?set MODEL_NAME}' \
     MODEL_GROUP_LIMITS='${MODEL_GROUP_LIMITS:?set MODEL_GROUP_LIMITS, e.g. maas-basic:100,maas-premium:100000}' \
@@ -90,6 +95,7 @@ case "$cmd" in
   scenario17-keycloak-realm)       cmd_scenario17_keycloak_realm ;;
   scenario17-keycloak-token-test)  cmd_scenario17_keycloak_token_test ;;
   scenario17-wire-authpolicy)      cmd_scenario17_wire_authpolicy ;;
+  scenario17-authorino-trust-ca)   cmd_scenario17_authorino_trust_ca ;;
   scenario17-register-model)       cmd_scenario17_register_model ;;
   scenario18-openai-routing-test)  cmd_scenario18_openai_routing_test ;;
   scenario19-governance-snapshot)  cmd_scenario19_governance_snapshot ;;

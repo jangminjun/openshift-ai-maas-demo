@@ -6,15 +6,11 @@
 
 ## 목적
 
-지금까지(시나리오 13 등)는 모델마다 **URL 경로**(`/<namespace>/<model-name>/v1/chat/completions`)가
-달라서, 모델을 바꾸려면 클라이언트 쪽 `base_url`을 매번 바꿔야 했다. 이 시나리오는 **URL은 고정**하고,
-표준 OpenAI 클라이언트가 늘 보내는 요청 Body의 `model` 필드값만으로 MaaS Gateway가 실제 백엔드
-모델/네임스페이스를 자동으로 찾아 라우팅하는지 검증한다. 부가로 그 라우팅 결과에 따라 구독 확인/비용
-계산/인가 정책(시나리오 17의 쿼터 등)이 **모델별로** 올바르게 갈리는지도 함께 본다.
-
-이게 되면 기존에 OpenAI API용으로 작성된 애플리케이션/SDK 코드를 **엔드포인트 URL 한 줄만** 바꿔서 그대로
-MaaS에 붙일 수 있다는 뜻이라, llm-d 자체 시나리오(11~16)보다 사실 "붙이기 쉬움"이라는 실용적 가치가 큰
-기능이다.
+지금까지(시나리오 13 등)는 모델마다 **URL 경로**가 달라서 모델을 바꾸려면 `base_url`도 매번
+바꿔야 했다. 이 시나리오는 **URL은 고정**하고 요청 Body의 `model` 필드값만으로 MaaS Gateway가
+실제 백엔드를 찾아 라우팅하는지, 그 결과에 따라 구독/쿼터(시나리오 17)도 모델별로 올바르게
+갈리는지 검증한다. 되면 기존 OpenAI API 앱을 **엔드포인트 URL 한 줄만** 바꿔서 MaaS에 붙일 수
+있다.
 
 ## 절차
 
@@ -67,10 +63,8 @@ resp_b = client.chat.completions.create(
 )
 ```
 
-**차이가 의미하는 것**: 이전 방식은 클라이언트 코드가 "어떤 모델을 쓸지"를 **연결 설정(`base_url`)** 으로
-표현해야 했다 — 즉 모델 카탈로그가 바뀔 때마다 애플리케이션의 설정/코드를 건드려야 했음. 이후 방식은
-그걸 **매 요청의 데이터(`model` 필드)** 로 옮겨서, 클라이언트는 한 번 설정한 뒤로 다시 안 건드리고
-모델 선택을 런타임 값으로 다룰 수 있다 — 기존 OpenAI API 기반 앱을 그대로 얹을 수 있는 이유가 이것.
+**의미**: 모델 선택이 연결 설정(`base_url`)에서 요청 데이터(`model` 필드)로 옮겨가서, 클라이언트는
+한 번 설정한 뒤 다시 안 건드리고 모델을 런타임 값으로 다룰 수 있다.
 
 ### 1) 실제 실행
 
@@ -115,15 +109,72 @@ PY
   이루어진다.
 - 존재하지 않거나 구독 안 된 모델명은 명확한 에러로 막힌다(자동으로 기본 모델로 폴백되거나 하지 않음).
 
-## 리스크 / 확인 필요
+## 테스트 스크립트 동작 흐름 (`harness/local/scenario18-manual-test.py` / `.java`)
 
-- `model` 필드값과 실제 클러스터의 `namespace/name` 매핑 규칙 확인 필요 — 그대로 1:1 문자열 매칭인지,
-  아니면 MaaS 쪽에 별도 alias/카탈로그 등록이 필요한지(예: Gen AI Studio에서 모델 등록 시 지정하는
-  `model` alias).
-- 기존 시나리오 13/17에서 쓰던 **경로 기반** 엔드포인트(`/<ns>/<model>/v1/chat/completions`)와 이번
-  **Body 기반** 고정 엔드포인트(`/v1/chat/completions`)가 동시에 지원되는지, 아니면 3.5부터 후자가
-  권장/대체 경로인지 — 문서화가 필요하면 이 프로젝트의 `AGENT.md`에 반영.
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#f5f5f5',
+  'primaryTextColor': '#111111',
+  'primaryBorderColor': '#333333',
+  'lineColor': '#333333',
+  'textColor': '#111111',
+  'edgeLabelBackground': '#ffffff',
+  'fontSize': '15px'
+}}}%%
+flowchart TD
+    S["scenario18-manual-test.py / .java<br/>client(HTTP endpoint)는 딱 한 번만 만듦"]
 
-## 실측 결과
+    subgraph FIXED[" "]
+        direction TB
+        URL["🔒 고정 엔드포인트 -- 절대 안 바뀜<br/>POST https://maas.../v1/chat/completions"]
+    end
 
-_(미착수 — `myocp` 클러스터 설치 및 RHOAI 3.5/MaaS 배포 완료 후 진행 예정)_
+    S -- "호출 1<br/>body: model=publishers/.../Qwen2.5-1.5B-Instruct" --> URL
+    S -- "호출 2 (같은 URL!)<br/>body: model=publishers/.../DeepSeek-R1-Distill-Qwen-1.5B" --> URL
+    S -- "호출 3 (같은 URL!)<br/>body: model=definitely-not-a-registered-model-..." --> URL
+
+    URL --> PP{"payload-pre-processing (ext_proc)<br/>body의 model 필드만 보고 실제 백엔드를 찾는다"}
+
+    PP -- "Qwen로 조회 성공<br/>path를 /maas-demo/maas-demo-model/...로 재작성" --> CHAIN_A["Authorino 인가 → maas-api 구독조회(mTLS) → vLLM(Qwen, GPU 1)"]
+    CHAIN_A --> OK_A["✅ HTTP 200<br/>model:Qwen2.5-1.5B-Instruct 응답"]
+
+    PP -- "DeepSeek로 조회 성공<br/>path를 /maas-demo/maas-demo-model-deepseek/...로 재작성" --> CHAIN_B["Authorino 인가 → maas-api 구독조회(mTLS) → vLLM(DeepSeek, GPU 2)"]
+    CHAIN_B --> OK_B["✅ HTTP 200<br/>model:DeepSeek-R1-Distill-Qwen-1.5B 응답"]
+
+    PP -- "조회 실패<br/>path 재작성 안 함, 원본 경로 그대로" --> FAIL["❌ HTTP 404<br/>(Authorino/maas-api/vLLM까지 안 감,<br/>조용히 다른 모델로 새지 않음)"]
+
+    classDef default fill:#f5f5f5,stroke:#333333,color:#111111,stroke-width:1px;
+    style S fill:#f5f5f5,stroke:#333333,color:#111111
+    style PP fill:#f5f5f5,stroke:#333333,color:#111111
+    style CHAIN_A fill:#f5f5f5,stroke:#333333,color:#111111
+    style CHAIN_B fill:#f5f5f5,stroke:#333333,color:#111111
+    style URL fill:#fff8e1,stroke:#b38f00,stroke-width:2px,color:#111111
+    style OK_A fill:#e6f5e6,stroke:#2e7d32,stroke-width:2px,color:#111111
+    style OK_B fill:#e6f5e6,stroke:#2e7d32,stroke-width:2px,color:#111111
+    style FAIL fill:#fae6e6,stroke:#c62828,stroke-width:2px,color:#111111
+    style FIXED fill:none,stroke:none,color:#111111
+```
+
+**핵심은 URL이 아니라 body다**: 세 호출 모두 완전히 같은 `https://maas.../v1/chat/completions`로
+간다 — client의 `base_url`은 단 한 번 설정한 뒤 다시는 안 바뀐다. 실제로 어느 모델로 가는지는
+전적으로 `payload-pre-processing`이 body의 `model` 필드를 보고 결정한다. 이 조회가 성공하면
+경로가 실제 모델 경로로 재작성되어 인가/추론까지 이어지고(200), 실패하면 그 자리에서 바로 404가
+나고 조용히 다른 모델로 새지 않는다.
+
+## 실측 결과 (2026-09-23)
+
+`model` 필드는 `/v1/models` 응답의 `id` 값을 그대로 넣어야 라우팅된다(짧은 이름은 404):
+
+```json
+{"model": "publishers/maas-demo/models/Qwen2.5-1.5B-Instruct", "messages": [...]}
+```
+
+**실제 서로 다른 두 모델로 라우팅 확인 완료**: GPU 노드를 하나 더 추가해(quota 재확인 후
+`myocp-z8mpx-gpu-g4dn-xlarge-us-east-1a` replicas=2) Qwen2.5-1.5B-Instruct와
+DeepSeek-R1-Distill-Qwen-1.5B를 각자의 GPU에 띄우고, **완전히 같은 URL**에 `model` 필드만
+바꿔서 호출 — 둘 다 HTTP 200, 응답 JSON의 `model` 필드도 요청한 모델과 정확히 일치. 경로
+기반(시나리오 17) 엔드포인트도 여전히 동작하므로 둘은 동시 지원됨. `local/scenario18-manual-test.py`
+/ `.java`가 이 두 모델로 검증하고 "요청한 model" vs "실제 응답한 모델"을 비교 출력한다.
+
+CPU에서 두 번째 모델을 띄우려던 시도(공식 vLLM 커뮤니티 CPU 이미지, 실제 요청에서 무한
+루프)는 포기하고 GPU로 전환 — 상세 재현 과정은 `lessonlearn.md` 참고.

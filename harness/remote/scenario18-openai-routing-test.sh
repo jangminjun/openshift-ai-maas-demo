@@ -9,7 +9,7 @@
 set -euo pipefail
 export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
 
-: "${MAAS_TEST_MODEL:?set MAAS_TEST_MODEL to a model name/alias registered with MaaS}"
+: "${MAAS_TEST_MODEL:?set MAAS_TEST_MODEL to the full 'id' from GET /v1/models, e.g. publishers/<ns>/models/<name> -- a short name (e.g. just <name>) 404s, it doesn't route}"
 MAAS_TEST_MODEL_B="${MAAS_TEST_MODEL_B:-}"  # optional second model, to prove routing actually differs
 
 CLUSTER_DOMAIN=$(oc get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')

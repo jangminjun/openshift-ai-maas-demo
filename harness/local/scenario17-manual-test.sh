@@ -86,13 +86,14 @@ echo "== 5) 헬스체크 (인증 없이도 되는 경로) -- HTTP 200 기대 =="
 curl -sk "${MAAS}/maas-api/health" -w "\nHTTP %{http_code}\n"
 
 echo ""
-echo "== 6) 실제 채팅 완성 -- 현재 HTTP 403 기대 (알려진 이슈#4, 토큰/그룹 문제 아님) =="
+echo "== 6) 실제 채팅 완성 -- HTTP 200 기대 =="
 curl -sk "${MAAS}/${MODEL_PATH}/v1/chat/completions" \
   -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
-  -d "{\"model\":\"${MODEL_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"1+1?\"}],\"max_tokens\":10}" \
+  -d "{\"model\":\"${MODEL_NAME}\",\"messages\":[{\"role\":\"user\",\"content\":\"1+1?\"}],\"max_tokens\":30}" \
   -w "\nHTTP %{http_code}\n"
-echo "(403이 뜨면 정상입니다 -- Authorino->maas-api mTLS 미해결 이슈 때문입니다. 토큰이나 그룹 설정"
-echo " 문제가 아닙니다. 자세한 원인: docs/scenarios/17-maas-external-oidc-auth.md 8번 섹션)"
+echo "(403이 뜨면 Authorino가 maas-api의 TLS 인증서를 다시 못 믿는 상태로 되돌아간 것 --"
+echo " ./harness.sh scenario17-authorino-trust-ca 재실행. 자세한 원인:"
+echo " docs/scenarios/17-maas-external-oidc-auth.md 8번 섹션)"
 
 echo ""
 echo "== 7) premium-user도 동일하게 토큰+groups 확인 =="
