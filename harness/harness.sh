@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# MaaS 3.5-GA-features harness for this repo (openshift-ai-maas-demo).
-# Assumes the base cluster + RHOAI 3.5 + MaaS gateway already exist --
-# built via openshift-aws-harness (base cluster) and
-# monitoring-llmd-rhoai/harness (`./harness.sh maas`, RHCL/Kuadrant +
-# modelsAsService). This harness only adds what scenarios 17-20
-# (docs/scenarios/17-20*.md) need on top of that.
+# Self-contained MaaS harness for this repo (openshift-ai-maas-demo).
+# Assumes only the base cluster + RHOAI 3.5 operator/DataScienceCluster
+# already exist (openshift-aws-harness -> harness.sh rhoai) -- everything
+# MaaS-specific (RHCL/Kuadrant, the gateways, Postgres, Keycloak, scenarios
+# 17-20) is provisioned by this harness alone; it does not depend on any
+# other application-level repo.
 #
 # Usage: ./harness.sh <subcommand> [args]
+#   maas-up                           RHCL(Kuadrant)+Authorino+Gateways+Postgres+dashboard flags -- run this first
 #   scenario17-keycloak-up            RHBK operator + Postgres + Keycloak instance + Route
 #   scenario17-keycloak-realm         realm + basic/premium groups + 2 users + OIDC client (pulls secrets to state/keycloak-users.env)
 #   scenario17-keycloak-token-test    standalone Keycloak check: both users get a token with a "groups" claim
@@ -30,6 +31,10 @@ source ./lib.sh
 
 cmd="${1:-}"
 [ -n "$cmd" ] && shift || true
+
+cmd_maas_up() {
+  ssh_bastion "bash -s" < ./remote/maas-up.sh
+}
 
 cmd_scenario17_keycloak_up() {
   ssh_bastion "KEYCLOAK_NAMESPACE='${KEYCLOAK_NAMESPACE}' bash -s" < ./remote/scenario17-keycloak-up.sh
@@ -111,6 +116,7 @@ cmd_scenario20_selfservice_user() {
 }
 
 case "$cmd" in
+  maas-up)                         cmd_maas_up ;;
   scenario17-keycloak-up)          cmd_scenario17_keycloak_up ;;
   scenario17-keycloak-realm)       cmd_scenario17_keycloak_realm ;;
   scenario17-keycloak-token-test)  cmd_scenario17_keycloak_token_test ;;

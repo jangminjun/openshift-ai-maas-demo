@@ -33,7 +33,7 @@ oc annotate gateway maas-default-gateway -n openshift-ingress \
   opendatahub.io/managed="false" \
   security.opendatahub.io/authorino-tls-bootstrap="true" --overwrite
 ```
-`monitoring-llmd-rhoai/harness/remote/maas.sh` Step 7에 자동화됨(모델 배포 전에 미리 적용).
+`harness/remote/maas-up.sh` Step 4에 자동화됨(모델 배포 전에 미리 적용).
 **교훈**: `maas-*` AuthPolicy가 갑자기 죽으면 `Overridden` 여부부터 확인 — 자기 설정이
 깨진 게 아니라 경쟁 정책이 이긴 것일 수 있음.
 
@@ -106,9 +106,9 @@ Authorino 자신의 서빙 인증서가 있는 `/etc/pki/tls/certs`가 아님)�
    `router-certs-default`로 해결.
 3. `maas-api`용 Postgres/secret(`maas-db-config`)이 없음 — 임시 단일 파드 Postgres로 해결.
 
-세 가지 모두 `monitoring-llmd-rhoai/harness/remote/maas.sh`에 반영(Step 4/4b)돼 새
-클러스터는 안 겪음. **교훈**: 상위 레벨 "Ready"만 보지 말고 하위 리소스 상태 조건과
-컨트롤러 로그를 직접 확인할 것.
+세 가지 모두 이 저장소의 `harness/remote/maas-up.sh`에 반영(Step 4/5)돼 새 클러스터는 안
+겪음. **교훈**: 상위 레벨 "Ready"만 보지 말고 하위 리소스 상태 조건과 컨트롤러 로그를 직접
+확인할 것.
 
 ## 2026-09-22 — RHOAI 3.5: `kserve.modelsAsService` → `aigateway.modelsAsAService` 개명
 

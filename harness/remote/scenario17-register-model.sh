@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Runs ON the bastion, after a model (LLMInferenceService) is already Ready
-# (see monitoring-llmd-rhoai's llmd-deploy-model) and after scenario17-wire-authpolicy.sh
-# AND scenario17-authorino-trust-ca.sh. Registers that model with MaaS's
-# governance layer so it shows up in /v1/models and is actually callable:
+# (see scenario18-deploy-model.sh -- harness.sh's scenario18-deploy-model
+# subcommand calls that then this in sequence) and after
+# scenario17-wire-authpolicy.sh AND scenario17-authorino-trust-ca.sh.
+# Registers that model with MaaS's governance layer so it shows up in
+# /v1/models and is actually callable:
 # creates a MaaSModelRef, one MaaSSubscription per group (with its own
 # token-rate-limit), and one MaaSAuthPolicy granting those groups access.
 # Idempotent -- safe to re-run for the same model, and safe to run again for

@@ -27,29 +27,30 @@ RHOAI 3.4까지는 MaaS 관련 설정(누가 어떤 모델을 구독할 수 있�
 ## 사전 조건 — 이 화면이 뜨려면 뭐가 설치/활성화돼 있어야 하나
 
 이건 화면에 나타나는 **결과**라서, 그 결과가 뜨려면 아래가 전부 맞아떨어져야 한다. 대부분
-`monitoring-llmd-rhoai/harness/remote/maas.sh`가 이미 자동화해 둔 단계들이라, 그 스크립트의 각
+이 저장소의 `harness/remote/maas-up.sh`가 이미 자동화해 둔 단계들이라, 그 스크립트의 각
 Step과 1:1로 대응시켜 놨다 — 페이지가 안 보이면 이 중 어느 단계가 빠졌는지부터 의심할 것.
 
 1. **RHOAI 3.5 오퍼레이터 + `DataScienceCluster` Ready** — `openshift-aws-harness/harness/harness.sh rhoai`
    (`channel: stable-3.5`로 이미 맞춰둠). 대시보드 자체(`rhods-dashboard`)가 이걸로 뜸.
-2. **RHCL(Kuadrant: Authorino + Limitador) 오퍼레이터** — `maas.sh` Step 1. Governance 페이지가
+2. **RHCL(Kuadrant: Authorino + Limitador) 오퍼레이터** — `maas-up.sh` Step 1. Governance 페이지가
    보여주고 고치는 `AuthPolicy`/`RateLimitPolicy` CR들의 컨트롤러가 이 오퍼레이터에서 나온다 — 이게
    없으면 페이지가 뜨더라도 "관리할 대상"(백엔드 CR) 자체가 없다.
-3. **`DataScienceCluster`의 `spec.components.kserve.modelsAsService.managementState: Managed`** —
-   `maas.sh` Step 3. MaaS 기능 자체의 온/오프 스위치.
-4. **`odhdashboardconfig`의 대시보드 기능 플래그** — `maas.sh` Step 5,
+3. **`DataScienceCluster`의 `spec.components.aigateway.modelsAsAService.managementState: Managed`** —
+   `maas-up.sh` Step 3 (RHOAI 3.4까지는 `kserve.modelsAsService`였음, 3.5에서 개명 —
+   `lessonlearn.md` 참고). MaaS 기능 자체의 온/오프 스위치.
+4. **`odhdashboardconfig`의 대시보드 기능 플래그** — `maas-up.sh` Step 7,
    `redhat-ods-applications` 네임스페이스의 `odh-dashboard-config`:
    `genAiStudio: true`, `modelAsService: true` (+ `disableModelRegistry: false`,
    `disableModelCatalog: false`, `disableKServeMetrics: false`, `disableLMEval: false`).
    **이게 핵심 스위치다 — 이 두 플래그가 꺼져 있으면 오퍼레이터/CR이 다 정상이어도 Settings 메뉴에
    "MaaS Governance" 항목 자체가 안 보일 가능성이 높다.** 확인: `oc get odhdashboardconfig
    odh-dashboard-config -n redhat-ods-applications -o jsonpath='{.spec.dashboardConfig}'`
-5. **대시보드/모델 컨트롤러 재기동** — `maas.sh` Step 6 (`odh-model-controller`,
+5. **대시보드/모델 컨트롤러 재기동** — `maas-up.sh` Step 8 (`odh-model-controller`,
    `kserve-controller-manager` pod 재시작). 위 설정 변경을 컨트롤러가 즉시 못 읽는 경우가 있어 필요.
 6. **`system:admin`(cluster-admin) 계정으로 로그인** — Settings 메뉴 자체가 관리자 전용일 가능성이 높음
    (일반 사용자로 접근 시 막히는지는 "리스크" 항목 참고).
 7. **(내용이 있으려면) 구독 대상이 될 모델/네임스페이스가 최소 1개 이상 배포되어 있을 것** — 예:
-   `monitoring-llmd-rhoai`의 `scenario11-14` 모델 중 아무거나, 또는 시나리오 17에서 만든 그룹
+   `./harness.sh scenario18-deploy-model`로 배포한 모델, 또는 시나리오 17에서 만든 그룹
    (`maas-basic`/`maas-premium`)에 매핑될 모델. 없으면 페이지는 뜨지만 Subscriptions 탭이 빈 화면일
    수 있다.
 

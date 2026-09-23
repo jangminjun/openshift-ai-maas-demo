@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs ON the bastion, after scenario17-keycloak-up.sh AND after
-# monitoring-llmd-rhoai's `./harness.sh maas` (needs the MaaS AuthPolicy to
-# already exist). Adds Keycloak as a trusted external JWT identity source on
+# `./harness.sh maas-up` (needs the MaaS AuthPolicy to already exist).
+# Adds Keycloak as a trusted external JWT identity source on
 # the MaaS gateway's AuthPolicy, alongside the existing api-keys and
 # openshift-identities (oc token) sources -- idempotent, safe to re-run.
 #
@@ -43,5 +43,5 @@ fi
 echo ""
 echo "Verify: oc get authpolicy maas-gateway-auth -n openshift-ingress -o jsonpath='{.status.conditions[-1]}'"
 echo "Should say Enforced=True. If it says Overridden, a competing AuthPolicy exists on"
-echo "maas-default-gateway -- check monitoring-llmd-rhoai/harness/remote/maas.sh Step 7"
+echo "maas-default-gateway -- check that maas-up.sh Step 4"
 echo "(opendatahub.io/managed=false annotation) ran successfully."

@@ -42,7 +42,8 @@ sequenceDiagram
 
 ## 사전 조건
 
-- 베이스 클러스터 + RHOAI 3.5 + MaaS 게이트웨이 (`openshift-aws-harness` → `monitoring-llmd-rhoai/harness maas`)
+- 베이스 클러스터 + RHOAI 3.5 (`openshift-aws-harness` → `harness.sh rhoai`) + MaaS 게이트웨이
+  (`openshift-ai-maas-demo/harness` → `./harness.sh maas-up`, 이 저장소 자체 스크립트)
 - 외부 IDP: **Red Hat build of Keycloak(RHBK) 오퍼레이터**로 클러스터 안에 직접 구축 (Bitnami나
   별도 VM이 아니라 OperatorHub 인증 오퍼레이터로 결정)
 
@@ -51,16 +52,16 @@ sequenceDiagram
 ```sh
 cd openshift-ai-maas-demo/harness
 
+./harness.sh maas-up                         # RHCL(Kuadrant)+Authorino+Gateways+Postgres+dashboard flags -- 한 번만
 ./harness.sh scenario17-keycloak-up          # RHBK 오퍼레이터 + Keycloak 인스턴스
 ./harness.sh scenario17-keycloak-realm       # realm + 그룹 2개 + 유저 2명 + OIDC 클라이언트
 ./harness.sh scenario17-keycloak-token-test  # Keycloak 단독 검증 (토큰에 groups 클레임 확인)
 ./harness.sh scenario17-wire-authpolicy      # Authorino가 Keycloak을 신뢰하도록 연결
 ./harness.sh scenario17-authorino-trust-ca   # Authorino가 라우터 CA(Keycloak)+service-ca(maas-api mTLS) 신뢰하도록
 
-# 모델 배포는 monitoring-llmd-rhoai에서 (예: LLMD_NAMESPACE=maas-demo LLMD_GATEWAY_NAME=maas-default-gateway)
 MODEL_NAMESPACE=maas-demo MODEL_NAME=maas-demo-model \
-  MODEL_GROUP_LIMITS="maas-basic:500,maas-premium:100000" \
-  ./harness.sh scenario17-register-model     # MaaSSubscription + MaaSAuthPolicy 그룹별 등록
+  MODEL_URI="hf://Qwen/Qwen2.5-1.5B-Instruct" \
+  ./harness.sh scenario18-deploy-model        # 모델 배포 + MaaSSubscription/MaaSAuthPolicy 그룹별 등록까지 한 번에
 
 bash ./local/scenario17-manual-test.sh       # 검증 (노트북에서 SSH 없이 바로 실행)
 ```
