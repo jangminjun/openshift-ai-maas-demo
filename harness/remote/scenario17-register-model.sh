@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
 # Runs ON the bastion, after a model (LLMInferenceService) is already Ready
-# (see monitoring-llmd-rhoai's llmd-deploy-model) and after scenario17-wire-authpolicy.sh.
-# Registers that model with MaaS's governance layer so it shows up in
-# /v1/models and (once the maas-api mTLS issue below is fixed) is actually
-# callable: creates a MaaSModelRef, one MaaSSubscription per group (with its
-# own token-rate-limit), and one MaaSAuthPolicy granting those groups access.
-# Idempotent -- every step checks before creating.
+# (see monitoring-llmd-rhoai's llmd-deploy-model) and after scenario17-wire-authpolicy.sh
+# AND scenario17-authorino-trust-ca.sh. Registers that model with MaaS's
+# governance layer so it shows up in /v1/models and is actually callable:
+# creates a MaaSModelRef, one MaaSSubscription per group (with its own
+# token-rate-limit), and one MaaSAuthPolicy granting those groups access.
+# Idempotent -- safe to re-run for the same model, and safe to run again for
+# a SECOND model against the same groups (appends to the existing per-group
+# subscription's modelRefs instead of skipping it).
 #
-# KNOWN GAP (2026-09-22, not yet fixed): even after this script, an actual
-# chat-completion call returns 403 -- Authorino's own outbound mTLS call to
-# maas-api (made internally during the AuthPolicy's subscription-info
-# metadata phase) is rejected by maas-api ("remote error: tls: bad
-# certificate"). This is unrelated to Keycloak/group config -- confirmed by
-# matching the failing connection's source IP to the Authorino pod's IP
-# exactly. /v1/models still works fine (that path doesn't need this mTLS
-# call). See docs/scenarios/17-maas-external-oidc-auth.md section 8 for the
-# full trace; fixing it is a prerequisite for this script's registration to
-# actually let calls through end to end.
+# Creating a new MaaSAuthPolicy here makes maas-controller regenerate the
+# gateway's AuthPolicy, which wipes the Keycloak identity source patch --
+# re-run scenario17-wire-authpolicy.sh right after this script.
 set -euo pipefail
 export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
 
@@ -48,6 +43,10 @@ spec:
 YAML
 
 echo "== MaaSSubscriptions (one per group) =="
+# A subscription is one-per-GROUP, not one-per-model -- its spec.modelRefs is
+# an array meant to hold every model that group can call. Re-running this
+# script for a SECOND model must append to that array, not skip just because
+# the subscription object already exists from the first model.
 IFS=',' read -ra PAIRS <<< "$MODEL_GROUP_LIMITS"
 GROUP_NAMES=()
 for pair in "${PAIRS[@]}"; do
@@ -55,7 +54,19 @@ for pair in "${PAIRS[@]}"; do
   GROUP_NAMES+=("$group")
   sub_name="${group}-sub"
   if oc get maassubscription "$sub_name" -n "$TENANT_NAMESPACE" &>/dev/null; then
-    echo "Subscription $sub_name already exists."
+    already_has=$(oc get maassubscription "$sub_name" -n "$TENANT_NAMESPACE" \
+      -o jsonpath='{range .spec.modelRefs[*]}{.name}{"\n"}{end}' | grep -qx "$MODEL_NAME" && echo yes || true)
+    if [ "$already_has" = "yes" ]; then
+      echo "Subscription $sub_name already has modelRef $MODEL_NAME."
+    else
+      oc patch maassubscription "$sub_name" -n "$TENANT_NAMESPACE" --type=json -p "[{
+        \"op\": \"add\", \"path\": \"/spec/modelRefs/-\",
+        \"value\": {\"name\": \"${MODEL_NAME}\", \"namespace\": \"${MODEL_NAMESPACE}\",
+                    \"tokenRateLimits\": [{\"limit\": ${limit}, \"window\": \"${TOKEN_WINDOW}\"}],
+                    \"billingRate\": {\"perToken\": \"0\"}}
+      }]"
+      echo "Appended modelRef $MODEL_NAME to existing subscription $sub_name."
+    fi
   else
     oc apply -f - <<YAML
 apiVersion: maas.opendatahub.io/v1alpha1

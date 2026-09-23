@@ -12,7 +12,9 @@
 #   scenario17-keycloak-token-test    standalone Keycloak check: both users get a token with a "groups" claim
 #   scenario17-wire-authpolicy        add Keycloak as a JWT identity source on the MaaS AuthPolicy (idempotent, re-run if it disappears)
 #   scenario17-authorino-trust-ca     make Authorino trust the router CA (Keycloak) + service-serving-signer CA (maas-api mTLS) -- idempotent, re-run after any cluster rebuild
-#   scenario17-register-model         MaaSModelRef + per-group MaaSSubscription + MaaSAuthPolicy for a deployed model
+#   scenario17-register-model         MaaSModelRef + per-group MaaSSubscription + MaaSAuthPolicy for a deployed model (safe to re-run for a 2nd/3rd model -- appends to existing subscriptions)
+#   scenario17-scale-gpu              scale the GPU MachineSet (e.g. GPU_REPLICAS=2 to add a 2nd GPU node for a 2nd model) -- re-check AWS quota first, don't trust old notes
+#   scenario18-deploy-model           deploy a GPU-backed LLMInferenceService (any model/namespace) + register it with MaaS in one step
 #   scenario18-openai-routing-test    fixed-endpoint /v1/chat/completions, model switched via body only
 #   scenario19-governance-snapshot    dump Authorino/Kuadrant/DSC CRs relevant to the Governance page, for before/after diffing
 #   scenario20-selfservice-user       add a non-admin htpasswd user for testing the self-service Subscriptions tab
@@ -67,6 +69,24 @@ cmd_scenario17_register_model() {
     MODEL_GROUP_LIMITS='${MODEL_GROUP_LIMITS:?set MODEL_GROUP_LIMITS, e.g. maas-basic:100,maas-premium:100000}' \
     TOKEN_WINDOW='${TOKEN_WINDOW:-1h}' TENANT_NAMESPACE='${TENANT_NAMESPACE:-models-as-a-service}' \
     bash -s" < ./remote/scenario17-register-model.sh
+  # A new MaaSAuthPolicy above triggers maas-controller to regenerate the
+  # gateway AuthPolicy, wiping the Keycloak identity source patch -- restore it.
+  cmd_scenario17_wire_authpolicy
+}
+
+cmd_scenario17_scale_gpu() {
+  ssh_bastion "GPU_REPLICAS='${GPU_REPLICAS:?set GPU_REPLICAS}' GPU_MACHINESET_NAME='${GPU_MACHINESET_NAME:-}' \
+    bash -s" < ./remote/scenario17-scale-gpu.sh
+}
+
+cmd_scenario18_deploy_model() {
+  : "${MODEL_NAMESPACE:?set MODEL_NAMESPACE}"; : "${MODEL_NAME:?set MODEL_NAME}"; : "${MODEL_URI:?set MODEL_URI}"
+  ssh_bastion "MODEL_NAMESPACE='${MODEL_NAMESPACE}' MODEL_NAME='${MODEL_NAME}' \
+    MODEL_URI='${MODEL_URI}' SERVED_MODEL_NAME='${SERVED_MODEL_NAME:-}' \
+    GATEWAY_NAME='${GATEWAY_NAME:-maas-default-gateway}' GATEWAY_NAMESPACE='${GATEWAY_NAMESPACE:-openshift-ingress}' \
+    GPU_NODE_INSTANCE_TYPE='${GPU_NODE_INSTANCE_TYPE:-g4dn.xlarge}' VLLM_ADDITIONAL_ARGS='${VLLM_ADDITIONAL_ARGS:-}' \
+    bash -s" < ./remote/scenario18-deploy-model.sh
+  MODEL_GROUP_LIMITS="${MODEL_GROUP_LIMITS:-maas-basic:500,maas-premium:100000}" cmd_scenario17_register_model
 }
 
 cmd_scenario18_openai_routing_test() {
@@ -97,6 +117,8 @@ case "$cmd" in
   scenario17-wire-authpolicy)      cmd_scenario17_wire_authpolicy ;;
   scenario17-authorino-trust-ca)   cmd_scenario17_authorino_trust_ca ;;
   scenario17-register-model)       cmd_scenario17_register_model ;;
+  scenario17-scale-gpu)            cmd_scenario17_scale_gpu ;;
+  scenario18-deploy-model)         cmd_scenario18_deploy_model ;;
   scenario18-openai-routing-test)  cmd_scenario18_openai_routing_test ;;
   scenario19-governance-snapshot)  cmd_scenario19_governance_snapshot ;;
   scenario20-selfservice-user)     cmd_scenario20_selfservice_user ;;

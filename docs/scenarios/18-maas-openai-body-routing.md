@@ -155,11 +155,8 @@ flowchart TD
     style FIXED fill:none,stroke:none,color:#111111
 ```
 
-**핵심은 URL이 아니라 body다**: 세 호출 모두 완전히 같은 `https://maas.../v1/chat/completions`로
-간다 — client의 `base_url`은 단 한 번 설정한 뒤 다시는 안 바뀐다. 실제로 어느 모델로 가는지는
-전적으로 `payload-pre-processing`이 body의 `model` 필드를 보고 결정한다. 이 조회가 성공하면
-경로가 실제 모델 경로로 재작성되어 인가/추론까지 이어지고(200), 실패하면 그 자리에서 바로 404가
-나고 조용히 다른 모델로 새지 않는다.
+**핵심은 URL이 아니라 body다**: 세 호출 모두 같은 URL, `base_url`은 안 바뀜.
+`payload-pre-processing`이 body의 `model` 필드로 라우팅 결정 — 성공 시 200, 실패 시 404.
 
 ## 실측 결과 (2026-09-23)
 
@@ -178,3 +175,11 @@ DeepSeek-R1-Distill-Qwen-1.5B를 각자의 GPU에 띄우고, **완전히 같은 
 
 CPU에서 두 번째 모델을 띄우려던 시도(공식 vLLM 커뮤니티 CPU 이미지, 실제 요청에서 무한
 루프)는 포기하고 GPU로 전환 — 상세 재현 과정은 `lessonlearn.md` 참고.
+
+**두 번째 모델 재현용 harness 명령** (GPU 하나 더 필요, 먼저 quota 확인):
+```sh
+GPU_REPLICAS=2 ./harness.sh scenario17-scale-gpu
+MODEL_NAMESPACE=maas-demo MODEL_NAME=maas-demo-model-deepseek \
+  MODEL_URI="hf://deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" \
+  ./harness.sh scenario18-deploy-model
+```
