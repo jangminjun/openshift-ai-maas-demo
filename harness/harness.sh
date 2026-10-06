@@ -19,6 +19,7 @@
 #   scenario18-openai-routing-test    fixed-endpoint /v1/chat/completions, model switched via body only
 #   scenario19-governance-snapshot    dump Authorino/Kuadrant/DSC CRs relevant to the Governance page, for before/after diffing
 #   scenario20-selfservice-user       add a non-admin htpasswd user in an OpenShift Group (SELF_SERVICE_GROUP, default maas-basic) for testing the self-service Subscriptions tab -- see local/scenario20-manual-test.sh to verify via API
+#   scenario21-pod-client             in-cluster Pod as MaaS client: SA token -> MaaS Gateway -> vLLM (subscribed vs. unsubscribed SA, asserts HTTP codes)
 #
 # Config: harness/config.env (bastion IP, SSH key, cluster name). Cluster
 # access details also documented in ../AGENT.md.
@@ -115,6 +116,11 @@ cmd_scenario20_selfservice_user() {
     SELF_SERVICE_GROUP='${SELF_SERVICE_GROUP:-maas-basic}' bash -s" < ./remote/scenario20-selfservice-user.sh
 }
 
+cmd_scenario21_pod_client() {
+  ssh_bastion "CLIENT_NAMESPACE='${CLIENT_NAMESPACE:-maas-pod-client}' MODEL_NAMESPACE='${MAAS_TEST_NAMESPACE}' \
+    MODEL_NAME='${MODEL_NAME:-maas-demo-model}' MAAS_PATH_MODE='${MAAS_PATH_MODE:-internal}' bash -s" < ./remote/scenario21-pod-client.sh
+}
+
 case "$cmd" in
   maas-up)                         cmd_maas_up ;;
   scenario17-keycloak-up)          cmd_scenario17_keycloak_up ;;
@@ -128,6 +134,7 @@ case "$cmd" in
   scenario18-openai-routing-test)  cmd_scenario18_openai_routing_test ;;
   scenario19-governance-snapshot)  cmd_scenario19_governance_snapshot ;;
   scenario20-selfservice-user)     cmd_scenario20_selfservice_user ;;
+  scenario21-pod-client)           cmd_scenario21_pod_client ;;
   *)
     err "Unknown subcommand '$cmd'. See header comment in ./harness.sh for the list."
     ;;
