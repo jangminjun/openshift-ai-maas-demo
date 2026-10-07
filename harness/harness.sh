@@ -20,6 +20,17 @@
 #   scenario19-governance-snapshot    dump Authorino/Kuadrant/DSC CRs relevant to the Governance page, for before/after diffing
 #   scenario20-selfservice-user       add a non-admin htpasswd user in an OpenShift Group (SELF_SERVICE_GROUP, default maas-basic) for testing the self-service Subscriptions tab -- see local/scenario20-manual-test.sh to verify via API
 #   scenario21-pod-client             in-cluster Pod as MaaS client: SA token -> MaaS Gateway -> vLLM (subscribed vs. unsubscribed SA, asserts HTTP codes)
+#   scenario22-token-quota            low-limit subscription: 429 on exhaustion, per-subject counter, recovery after window
+#   scenario23-networkpolicy          NetworkPolicy so only the MaaS Gateway reaches vLLM (NP_ACTION=remove to roll back)
+#   scenario24-api-key-lifecycle      API key issue/use/self-management denial/revoke/expiry
+#   scenario25-header-spoofing        client-injected x-maas-* identity headers are rejected
+#   scenario26-multi-subscription     two subscriptions per subject: x-maas-subscription, priority, quota isolation
+#   scenario27-streaming-usage        stream=true responses are counted against the token quota
+#   scenario28-usage-metering         Limitador/vLLM metrics vs client usage; per-subject labels and billing
+#   scenario29-tenant-isolation       second AITenant (new Gateway/ELB), cross-tenant keys/tokens (KEEP_TENANT=1 to keep)
+#   scenario30-mcp-gateway            MCP server behind the Gateway: authn, subscription authz, rate limit, bypass
+# Scenarios 22-30 need jq and are prefixed with remote/lib-maas-client.sh; each
+# remote/scenarioNN-*.sh also runs locally (bash remote/scenarioNN-*.sh) with `oc login`.
 #
 # Config: harness/config.env (bastion IP, SSH key, cluster name). Cluster
 # access details also documented in ../AGENT.md.
@@ -121,6 +132,14 @@ cmd_scenario21_pod_client() {
     MODEL_NAME='${MODEL_NAME:-maas-demo-model}' MAAS_PATH_MODE='${MAAS_PATH_MODE:-internal}' bash -s" < ./remote/scenario21-pod-client.sh
 }
 
+# run_client_scenario SCRIPT [VAR...] -- ships lib-maas-client.sh + SCRIPT to the
+# bastion on stdin, forwarding the named env vars when they are set locally.
+run_client_scenario() {
+  local script=$1; shift; local envs="" v
+  for v in "$@"; do [ -n "${!v:-}" ] && envs+="${v}='${!v}' "; done
+  cat ./remote/lib-maas-client.sh "./remote/${script}" | ssh_bastion "${envs}bash -s"
+}
+
 case "$cmd" in
   maas-up)                         cmd_maas_up ;;
   scenario17-keycloak-up)          cmd_scenario17_keycloak_up ;;
@@ -135,6 +154,15 @@ case "$cmd" in
   scenario19-governance-snapshot)  cmd_scenario19_governance_snapshot ;;
   scenario20-selfservice-user)     cmd_scenario20_selfservice_user ;;
   scenario21-pod-client)           cmd_scenario21_pod_client ;;
+  scenario22-token-quota)          run_client_scenario scenario22-token-quota.sh QUOTA_LIMIT QUOTA_WINDOW QUOTA_WINDOW_SECONDS MAX_TOKENS ;;
+  scenario23-networkpolicy)        run_client_scenario scenario23-gateway-bypass-networkpolicy.sh NP_ACTION ;;
+  scenario24-api-key-lifecycle)    run_client_scenario scenario24-api-key-lifecycle.sh KEY_TTL_SECONDS ;;
+  scenario25-header-spoofing)      run_client_scenario scenario25-identity-header-spoofing.sh ;;
+  scenario26-multi-subscription)   run_client_scenario scenario26-multi-subscription.sh LOW_LIMIT HIGH_LIMIT WINDOW ;;
+  scenario27-streaming-usage)      run_client_scenario scenario27-streaming-usage.sh LIMIT WINDOW MAX_TOKENS ;;
+  scenario28-usage-metering)       run_client_scenario scenario28-usage-metering.sh REQUESTS SCRAPE_WAIT ;;
+  scenario29-tenant-isolation)     run_client_scenario scenario29-tenant-isolation.sh KEEP_TENANT TENANT_B ;;
+  scenario30-mcp-gateway)          run_client_scenario scenario30-mcp-gateway.sh BURST ;;
   *)
     err "Unknown subcommand '$cmd'. See header comment in ./harness.sh for the list."
     ;;
