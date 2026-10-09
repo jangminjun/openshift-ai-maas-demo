@@ -8,7 +8,7 @@
 # over SSH stdin (no on-disk path to chain to a sibling file from); harness.sh's
 # cmd_scenario18_deploy_model calls both in sequence instead.
 set -euo pipefail
-export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
+[ -f "$HOME/ocp-install/auth/kubeconfig" ] && export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
 
 : "${MODEL_NAMESPACE:?set MODEL_NAMESPACE, e.g. maas-demo}"
 : "${MODEL_NAME:?set MODEL_NAME -- this becomes the LLMInferenceService/MaaSModelRef name, e.g. maas-demo-model-deepseek}"

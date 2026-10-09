@@ -15,7 +15,7 @@
 # gateway's AuthPolicy, which wipes the Keycloak identity source patch --
 # re-run scenario17-wire-authpolicy.sh right after this script.
 set -euo pipefail
-export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
+[ -f "$HOME/ocp-install/auth/kubeconfig" ] && export KUBECONFIG="$HOME/ocp-install/auth/kubeconfig"
 
 : "${MODEL_NAMESPACE:?set MODEL_NAMESPACE}"
 : "${MODEL_NAME:?set MODEL_NAME}"
