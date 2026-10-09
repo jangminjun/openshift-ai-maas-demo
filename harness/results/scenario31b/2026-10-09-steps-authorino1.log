@@ -1,0 +1,73 @@
+== probe rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+PING: PONG
+RTT ms (min max avg samples): 12 13 12.17 46
+== [B-remote-cached-c32] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=32 (2 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 12 15 12.41 46
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+4      717.0          13/16/13.11
+31     698.2          12/13/12.86
+59     683.7          12/12/12.00
+85     692.4          13/14/13.23
+112    689.9          11/13/11.81
+139    685.0          11/13/11.91
+
+== [B-remote-cached-c32] result ==
+requests (200 / total)               34361 / 34539
+HTTP codes                           200:34361 500:178 
+throughput (req/s)                   224.3
+client latency p50/p95/p99/max ms    124 / 175 / 213 / 311
+Limitador authorized/limited calls   34361 / 0
+Redis commands from Limitador        103083 (624.7/s, 2.98 per request)
+  command mix                        get=34361 incrby=34361 evalsha=34361 
+Redis network from Limitador (approx) in 280.9 KB/s, out 3.8 KB/s = 2.332 Mbps (1393 B/request)
+Redis keys                           22 -> 22
+Redis used_memory                    1.23 MB (peak 1.25 MB)
+RTT under load, avg of samples (ms)  12.49 (max 16)
+
+raw requests saved: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-045613-B-remote-cached-c32.requests
+
+== [B-remote-cached-c64] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=64 (4 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 13 14 13.58 43
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+4      3197.0         12/13/12.02
+30     284.0          11/19/12.44
+57     276.0          13/16/13.51
+84     256.8          12/15/12.15
+111    299.2          11/15/11.85
+138    262.6          13/14/13.49
+
+== [B-remote-cached-c64] result ==
+requests (200 / total)               16575 / 39613
+HTTP codes                           200:16575 500:23038 
+throughput (req/s)                   250.7
+client latency p50/p95/p99/max ms    236 / 302 / 322 / 452
+Limitador authorized/limited calls   16575 / 0
+Redis commands from Limitador        49725 (297.8/s, 1.26 per request)
+  command mix                        get=16575 incrby=16575 evalsha=16575 
+Redis network from Limitador (approx) in 133.9 KB/s, out 1.8 KB/s = 1.111 Mbps (586 B/request)
+Redis keys                           22 -> 22
+Redis used_memory                    1.23 MB (peak 1.25 MB)
+RTT under load, avg of samples (ms)  12.58 (max 19)
+
+raw requests saved: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-050132-B-remote-cached-c64.requests
+
+== [B-remote-cached-c128] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=128 (8 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 12 13 12.60 45
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+7      682.3          13/17/13.63
+37     5.5            11/21/12.29

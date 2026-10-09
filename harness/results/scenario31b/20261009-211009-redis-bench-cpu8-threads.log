@@ -1,0 +1,10 @@
+== redis-benchmark -> ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379 (--tls --insecure) pods=8 pipeline=8 key=1300B rounds=500
+== RTT idle: 13 13 13.00 44
+== Redis: redis_version:7.2.16, io_threads 4
+
+conns  cmd/s      p50 ms         redis CPU  throttled  net Mbps   RTT ms     MaaS req/s eq.
+1600   141463     79.32          319%       0%         1160.9     144.29     47154
+   detail: EVAL return(redis.call([[incrby]],KEYS[1],ARGV[1])) 1 kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+
+MaaS req/s eq. = Redis cmd/s / 3 (Limitador issues 3 commands per MaaS request, scenario 31)
+log: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-211009-redis-bench.log

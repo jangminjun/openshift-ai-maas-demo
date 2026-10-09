@@ -1,0 +1,75 @@
+== probe rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+PING: PONG
+RTT ms (min max avg samples): 12 14 12.09 46
+== [B-remote-cached-c32] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=32 (2 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 11 12 11.04 49
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== [B-remote-cached-c64] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=64 (4 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 13 14 13.36 44
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== [B-remote-cached-c128] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=128 (8 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 13 14 13.11 44
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== [B-remote-cached-c256] Limitador storage=redis-cached, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=256 (16 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 13 14 13.25 44
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== Limitador storage -> redis ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+{"redis":{"configSecretRef":{"name":"limitador-redis-config"}}}
+== [B-remote-sync-c256] Limitador storage=redis, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=256 (16 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 12 16 12.22 46
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== Limitador storage -> redis-cached ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+{"redis-cached":{"configSecretRef":{"name":"limitador-redis-config"},"options":{"batch-size":100,"flush-period":500,"max-cached":10000,"response-timeout":500}}}
+== restore redis://limitador-redis.kuadrant-system.svc.cluster.local:6379 ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+-- Limitador log (redis/partition/error)
+(none)
+Limitador store: redis://limitador-redis.kuadrant-system.svc.cluster.local:6379
+== [B-incluster-cached-c256] Limitador storage=redis-cached, Redis=redis://limitador-redis.kuadrant-system.svc.cluster.local:6379 ==
+   subjects=20 concurrency=256 (16 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 0 4 0.83 93
+remote/scenario31-remote-redis-load.sh: line 124: WOFF: unbound variable
+
+== 1) preflight: rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+PING: PONG
+RTT ms (min max avg samples): 12 14 12.33 46
+== 2) backup current URL ==
+saved to /c/Users/USER/workspace/openshift-ai-maas-demo/harness/state/limitador-redis-url.orig
+== 3) Secret limitador-redis-config + rollout restart ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+-- Limitador log (redis/partition/error)
+(none)
+Limitador store: rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure
+ALL 31B RUNS DONE

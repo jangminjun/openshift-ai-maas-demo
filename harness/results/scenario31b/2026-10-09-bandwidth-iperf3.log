@@ -1,0 +1,12 @@
+== upload (MaaS -> remote), 1 stream, 15s ==
+[  5]   0.00-15.00  sec  3.04 GBytes  1741 Mbits/sec  659            sender
+[  5]   0.00-15.02  sec  3.04 GBytes  1740 Mbits/sec                  receiver
+== upload (MaaS -> remote), 8 streams, 15s ==
+[SUM]   0.00-15.00  sec  12.0 GBytes  6870 Mbits/sec  2064             sender
+[SUM]   0.00-15.01  sec  12.0 GBytes  6856 Mbits/sec                  receiver
+== download (remote -> MaaS), 1 stream, 15s ==
+[  5]   0.00-15.02  sec  2.73 GBytes  1564 Mbits/sec  271            sender
+[  5]   0.00-15.00  sec  2.73 GBytes  1563 Mbits/sec                  receiver
+== download (remote -> MaaS), 8 streams, 15s ==
+[SUM]   0.00-15.01  sec  14.9 GBytes  8528 Mbits/sec  10230             sender
+[SUM]   0.00-15.00  sec  14.9 GBytes  8521 Mbits/sec                  receiver

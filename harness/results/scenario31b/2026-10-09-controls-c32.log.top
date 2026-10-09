@@ -1,0 +1,21 @@
+-- live top B-remote-sync-c32
+authorino-69498fc4fc-5xwm4             1167m   1280Mi   
+authorino-69498fc4fc-64bdx             1089m   1339Mi   
+authorino-69498fc4fc-8czr9             1267m   1267Mi   
+limitador-limitador-86dcc857b7-95v2k   115m    6Mi      
+gateway total CPU(m) 2362
+maas-api-856d66d5b-mms55   192m   28Mi   
+-- live top B-incluster-cached-c32
+authorino-69498fc4fc-5xwm4             1150m   1261Mi   
+authorino-69498fc4fc-64bdx             1345m   1402Mi   
+authorino-69498fc4fc-8czr9             1517m   1288Mi   
+limitador-limitador-7b464f4887-hp6dt   112m    5Mi      
+gateway total CPU(m) 2732
+maas-api-856d66d5b-mms55   219m   28Mi   
+-- live top B-incluster-sync-c32
+authorino-69498fc4fc-5xwm4             1172m   1265Mi   
+authorino-69498fc4fc-64bdx             1361m   1423Mi   
+authorino-69498fc4fc-8czr9             1517m   1276Mi   
+limitador-limitador-8494cd995d-pj88s   108m    4Mi      
+gateway total CPU(m) 2684
+maas-api-856d66d5b-mms55   224m   26Mi   

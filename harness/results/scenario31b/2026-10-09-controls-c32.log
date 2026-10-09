@@ -1,0 +1,125 @@
+== [B-remote-sync-c32] Limitador storage=redis, Redis=rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+   subjects=20 concurrency=32 (2 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 11 13 12.00 46
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+4      763.8          11/13/11.64
+31     690.6          12/13/12.84
+58     684.9          13/18/13.63
+85     693.0          12/15/12.71
+112    679.7          13/17/13.49
+139    681.4          11/12/11.40
+
+== [B-remote-sync-c32] result ==
+requests (200 / total)               34278 / 34317
+HTTP codes                           200:34278 500:39 
+throughput (req/s)                   222.8
+client latency p50/p95/p99/max ms    124 / 165 / 193 / 325
+Limitador authorized/limited calls   34278 / 0
+Redis commands from Limitador        102834 (623.2/s, 3.00 per request)
+  command mix                        get=34278 incrby=34278 evalsha=34278 
+Redis network from Limitador (approx) in 280.2 KB/s, out 4.2 KB/s = 2.330 Mbps (1400 B/request)
+Redis keys                           22 -> 22
+Redis used_memory                    1.23 MB (peak 1.25 MB)
+RTT under load, avg of samples (ms)  12.62 (max 18)
+
+raw requests saved: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-053302-B-remote-sync-c32.requests
+
+== Limitador storage -> redis-cached ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+{"redis-cached":{"configSecretRef":{"name":"limitador-redis-config"},"options":{"batch-size":100,"flush-period":500,"max-cached":10000,"response-timeout":500}}}
+== restore redis://limitador-redis.kuadrant-system.svc.cluster.local:6379 ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+-- Limitador log (redis/partition/error)
+(none)
+Limitador store: redis://limitador-redis.kuadrant-system.svc.cluster.local:6379
+== [B-incluster-cached-c32] Limitador storage=redis-cached, Redis=redis://limitador-redis.kuadrant-system.svc.cluster.local:6379 ==
+   subjects=20 concurrency=32 (2 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 0 2 0.80 93
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+5      814.6          0/6/1.28
+32     766.4          0/8/1.50
+59     760.6          0/9/1.40
+85     765.3          0/5/1.31
+112    759.5          0/6/1.34
+139    747.0          0/9/1.50
+
+== [B-incluster-cached-c32] result ==
+requests (200 / total)               37886 / 38132
+HTTP codes                           200:37886 500:246 
+throughput (req/s)                   247.6
+client latency p50/p95/p99/max ms    104 / 168 / 222 / 361
+Limitador authorized/limited calls   37886 / 0
+Redis commands from Limitador        113698 (689.1/s, 2.98 per request)
+  command mix                        expire=20 sadd=20 get=37886 incrby=37886 evalsha=37886 
+Redis network from Limitador (approx) in 309.7 KB/s, out 4.2 KB/s = 2.571 Mbps (1390 B/request)
+Redis keys                           1 -> 21
+Redis used_memory                    1.13 MB (peak 1.14 MB)
+RTT under load, avg of samples (ms)  1.39 (max 9)
+
+raw requests saved: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-053832-B-incluster-cached-c32.requests
+
+== Limitador storage -> redis ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+{"redis":{"configSecretRef":{"name":"limitador-redis-config"}}}
+== [B-incluster-sync-c32] Limitador storage=redis, Redis=redis://limitador-redis.kuadrant-system.svc.cluster.local:6379 ==
+   subjects=20 concurrency=32 (2 pod x 16) duration=120s max_tokens=1
+   credentials: apikey x 20
+
+== RTT idle (Limitador namespace -> Redis): min max avg samples = 0 1 0.79 94
+
+== under load (every 20s; Limitador commands only) ==
+t(s)   Redis cmd/s    RTT min/max/avg(ms)
+5      862.2          0/5/1.76
+34     747.9          0/6/1.39
+62     786.2          0/5/1.16
+89     743.3          0/6/1.47
+116    737.0          0/4/1.49
+143    746.6          0/5/1.14
+
+== [B-incluster-sync-c32] result ==
+requests (200 / total)               37390 / 37674
+HTTP codes                           200:37390 500:284 
+throughput (req/s)                   244.6
+client latency p50/p95/p99/max ms    104 / 173 / 228 / 1112
+Limitador authorized/limited calls   37390 / 0
+Redis commands from Limitador        112170 (663.7/s, 2.98 per request)
+  command mix                        get=37390 incrby=37390 evalsha=37390 
+Redis network from Limitador (approx) in 298.4 KB/s, out 4.2 KB/s = 2.479 Mbps (1390 B/request)
+Redis keys                           21 -> 21
+Redis used_memory                    1.13 MB (peak 1.14 MB)
+RTT under load, avg of samples (ms)  1.40 (max 6)
+
+raw requests saved: /c/Users/USER/workspace/openshift-ai-maas-demo/harness/results/scenario31b/20261009-054357-B-incluster-sync-c32.requests
+
+== Limitador storage -> redis-cached ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+{"redis-cached":{"configSecretRef":{"name":"limitador-redis-config"},"options":{"batch-size":100,"flush-period":500,"max-cached":10000,"response-timeout":500}}}
+== 1) preflight: rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure ==
+PING: PONG
+RTT ms (min max avg samples): 13 15 13.36 44
+== 2) backup current URL ==
+saved to /c/Users/USER/workspace/openshift-ai-maas-demo/harness/state/limitador-redis-url.orig
+== 3) Secret limitador-redis-config + rollout restart ==
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "limitador-limitador" rollout to finish: 1 old replicas are pending termination...
+deployment "limitador-limitador" successfully rolled out
+-- Limitador log (redis/partition/error)
+(none)
+Limitador store: rediss://default:****@ac5d72b03cbea4c6e8364620c067271a-b667c724cdd724fc.elb.us-east-2.amazonaws.com:6379#insecure
+ALL 31B CONTROLS DONE

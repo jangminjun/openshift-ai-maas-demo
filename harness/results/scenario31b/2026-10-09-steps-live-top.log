@@ -1,0 +1,28 @@
+-- live top 20:18:45 during == [B-remote-cached-c128]
+authorino-69498fc4fc-5xwm4             1317m   1185Mi   
+authorino-69498fc4fc-64bdx             1231m   1385Mi   
+authorino-69498fc4fc-8czr9             1819m   1248Mi   
+limitador-limitador-55cb5f6f76-jvnnt   107m    7Mi      
+gateway total CPU(m) 3772 pods 10
+payload-pre-processing-64c445f5c5-655gl                           192m   40Mi    
+payload-processing-7c54987744-nv7gn                               118m   36Mi    
+maas-demo-model-kserve-64747f47f4-b9dwv   454m   3936Mi   
+maas-demo-model-kserve-64747f47f4-pb7lq   495m   7376Mi   
+maas-demo-model-kserve-64747f47f4-vdqkc   463m   3898Mi   
+maas-demo-model-kserve-64747f47f4-wb7v8   466m   3910Mi   
+maas-demo-model-kserve-64747f47f4-xr97n   470m   3909Mi   
+maas-api-856d66d5b-mms55   494m   33Mi   
+-- live top 20:19:22 during == [B-remote-cached-c128]
+authorino-69498fc4fc-5xwm4             1312m   1191Mi   
+authorino-69498fc4fc-64bdx             1380m   1395Mi   
+authorino-69498fc4fc-8czr9             1849m   1230Mi   
+limitador-limitador-55cb5f6f76-jvnnt   105m    7Mi      
+gateway total CPU(m) 3753 pods 10
+payload-pre-processing-64c445f5c5-655gl                           189m   41Mi    
+payload-processing-7c54987744-nv7gn                               114m   37Mi    
+maas-demo-model-kserve-64747f47f4-b9dwv   452m   3938Mi   
+maas-demo-model-kserve-64747f47f4-pb7lq   483m   7379Mi   
+maas-demo-model-kserve-64747f47f4-vdqkc   483m   3899Mi   
+maas-demo-model-kserve-64747f47f4-wb7v8   478m   3911Mi   
+maas-demo-model-kserve-64747f47f4-xr97n   478m   3911Mi   
+maas-api-856d66d5b-mms55   495m   31Mi   
