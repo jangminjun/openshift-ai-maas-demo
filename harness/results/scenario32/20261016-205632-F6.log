@@ -1,0 +1,45 @@
+== F6: load 16 concurrent, fault at +30s for 60s, total 210s ==
+Limitador storage: "redis-cached"
+t(s)   event      partitioned  authorized limited    redis_cmds limitador_ready
+7      -          0            +301       +0         +1040      1/1
+22     -          0            +754       +0         +2292      1/1
+38     redis-stop 0            +777       +0         +-         1/1
+56     -          0            +0         +0         +-         1/1
+70     -          0            +0         +0         +-         1/1
+85     -          0            +0         +0         +-         1/1
+101    redis-start 0            +94        +0         +-9133     1/1
+119    -          0            +830       +0         +2507      1/1
+136    -          0            +764       +0         +2261      1/1
+151    -          0            +760       +0         +2256      1/1
+167    -          0            +842       +0         +2456      1/1
+182    -          0            +705       +0         +2203      1/1
+199    -          0            +866       +0         +2604      1/1
+
+== client timeline (10 s buckets; fault window +30..+90s) ==
+t(s)     total   200     429     5xx     other    p50 ms
+0        320     319     0       1       0        316
+10       491     491     0       0       0        314
+20       489     489     0       0       0        316
+30       475     474     0       1       0        322
+40       355     348     0       7       0        467
+50       332     332     0       0       0        468
+60       337     337     0       0       0        469
+70       339     339     0       0       0        466
+80       334     334     0       0       0        465
+90       333     331     0       2       0        467
+100      423     423     0       0       0        316
+110      504     504     0       0       0        307
+120      502     485     0       17      0        308
+130      494     494     0       0       0        311
+140      504     504     0       0       0        307
+150      507     507     0       0       0        307
+160      501     500     0       1       0        308
+170      494     493     0       1       0        309
+180      492     492     0       0       0        311
+190      502     502     0       0       0        309
+200      501     501     0       0       0        307
+
+HTTP codes total: 200:9199 500:30 
+Limitador authorized/limited: 7077 / 0 (counters reset if Limitador restarted)
+Redis counters sum: before 408105 -> after 705129 (+297024)
+model tokens served (vLLM): +386358  -> counted in Redis: 76.9%

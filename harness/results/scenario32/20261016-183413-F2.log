@@ -1,0 +1,39 @@
+== F2 baseline (link up): 200 tok / 2m, max_tokens 64 ==
+phase      #    HTTP  tokens  cumulative
+up         1    200   102     102
+up         2    200   102     204
+up         3    429   0       204
+up         4    429   0       204
+up         5    429   0       204
+up         6    429   0       204
+up         7    429   0       204
+up         8    429   0       204
+up         9    429   0       204
+up         10   429   0       204
+up         11   429   0       204
+up         12   429   0       204
+up         13   429   0       204
+up         14   429   0       204
+up         15   429   0       204
+up: limit 200 tok, first 429 at #3, tokens served 204
+-- wait 120s for the window to reset
+== F2 link cut ==
+datastore_partitioned=0
+phase      #    HTTP  tokens  cumulative
+cut        1    200   102     102
+cut        2    200   99      201
+cut        3    200   102     303
+cut        4    200   92      395
+cut        5    200   91      486
+cut        6    200   102     588
+cut        7    200   102     690
+cut        8    200   102     792
+cut        9    200   102     894
+cut        10   200   84      978
+cut        11   200   102     1080
+cut        12   200   83      1163
+cut        13   200   102     1265
+cut        14   200   88      1353
+cut        15   200   102     1455
+cut: limit 200 tok, first 429 at #none, tokens served 1455
+datastore_partitioned=0

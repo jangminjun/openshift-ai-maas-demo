@@ -1,0 +1,5 @@
+== F6: load 16 concurrent, fault at +30s for 60s, total 210s ==
+Limitador storage: "redis-cached"
+t(s)   event      partitioned  authorized limited    redis_cmds limitador_ready
+7      -          0            +326       +0         +1041      1/1
+22     -          0            +739       +0         +2165      1/1

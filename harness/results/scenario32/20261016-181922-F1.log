@@ -1,0 +1,36 @@
+== F1: load 16 concurrent, fault at +30s for 60s, total 150s ==
+Limitador storage: "redis-cached"
+t(s)   event      partitioned  authorized limited    redis_cmds limitador_ready
+9      -          0            +400       +0         +1212      1/1
+24     -          0            +719       +0         +2125      1/1
+39     cut        0            +709       +0         +1460      1/1
+57     -          0            +0         +0         +2         1/1
+73     -          0            +0         +0         +2         1/1
+88     -          0            +0         +0         +2         1/1
+103    restore    0            +0         +0         +2         1/1
+118    -          0            +0         +0         +2         1/1
+133    -          0            +0         +0         +2         1/1
+147    -          0            +0         +0         +240       1/1
+
+== client timeline (10 s buckets; fault window +30..+90s) ==
+t(s)     total   200     429     5xx     other    p50 ms
+0        275     275     0       0       0        314
+10       495     494     0       1       0        310
+20       492     492     0       0       0        313
+30       495     495     0       0       0        312
+40       358     354     0       4       0        469
+50       326     326     0       0       0        470
+60       336     336     0       0       0        469
+70       332     332     0       0       0        471
+80       331     331     0       0       0        472
+90       331     331     0       0       0        472
+100      333     333     0       0       0        471
+110      332     332     0       0       0        470
+120      337     332     0       5       0        468
+130      330     330     0       0       0        470
+140      335     335     0       0       0        471
+
+HTTP codes total: 200:5428 500:10 
+Limitador authorized/limited: 1828 / 0 (counters reset if Limitador restarted)
+Redis counters sum: before 332892 -> after 412398 (+79506)
+model tokens served (vLLM): +227976  -> counted in Redis: 34.9%
